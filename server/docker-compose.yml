@@ -1,1 +1,42 @@
-ser
+services:
+  ftp-server:
+    container_name: ftp
+    image: garethflowers/ftp-server
+    hostname: ftp-server
+    restart: always
+    environment:
+      - FTP_USER=${FTP_USERNAME}
+      - FTP_PASS=${FTP_PASSWORD}
+      - PUBLIC_IP=${PUBLIC_IP}
+    ports:
+      - "20-21:20-21/tcp"
+      - "40000-40009:40000-40009/tcp"  # passive mode ports
+    volumes:
+      - ./data:/home/${FTP_USERNAME}
+  
+  python-app:
+    image: python:3.12-slim
+    container_name: python-app
+    volumes:
+      - ./data:/usr/share/app:ro
+    working_dir: /usr/share/app
+    command: python -m http.server 8080 --bind 0.0.0.0
+    expose:
+      - "8080"
+    # NO healthcheck - Python http.server doesn't need it
+
+  nginx-auth:
+    image: nginx:alpine
+    container_name: nginx-auth
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx:/etc/nginx/conf.d:ro
+      - ./htpasswd:/etc/nginx/.htpasswd:ro
+    depends_on:
+      - python-app
+    # Removed healthcheck dependency
+
+networks:
+  default:
+    name: app-net
