@@ -1,0 +1,5 @@
+# creating user and password
+docker run --rm -v "${PWD}:/host" httpd:alpine htpasswd -cb /host/htpasswd admin secret123
+
+# upload files using curl
+curl -u myuser:mypassword --upload-file "filename.txt" ftp://127.0.0.1/ 
